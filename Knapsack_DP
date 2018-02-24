@@ -1,0 +1,77 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import copy
+from collections import namedtuple
+Item = namedtuple("Item", ['index', 'value', 'weight'])
+
+"""
+Input format
+item_count capacity
+item1_
+"""
+# Solve Knapsack problem in O(n^2) and O(n) space, return best value and best sequence of action lead to this optimazation
+def solve_it(input_data):
+    # parse the input
+    lines = input_data.split('\n')
+
+    firstLine = lines[0].split()
+    item_count = int(firstLine[0])
+    capacity = int(firstLine[1])
+
+    items = []
+
+    for i in range(1, item_count+1):
+        line = lines[i]
+        parts = line.split()
+        items.append(Item(i-1, int(parts[0]), int(parts[1])))
+
+    # using Dynamic Programming
+    # table for best value and action for best action
+    # These 2D array only have 2 columns because we only need to back propagate the previous column
+    # In 2D array action, int is stored and turn into binary number later to return the sequence of action.
+    # The method aove aim to save space, as the test case get exponentially big (99000->1000000 items)
+    table = []
+    for x in range(2):
+        table.append([])
+        for y in range(capacity+1):
+            table[x].append(0)
+    action = table.copy()
+    for item in items:
+        for i in range(capacity+1):
+            """
+            for x in table:
+                print(x)
+            print('/n')
+            """
+            # initialize table and action
+            if item.index == 0:
+                if item.weight<i:
+                    table[0][i] = item.value
+                    action[0][i] = 1
+            # Dynamic Programming
+            else:
+                if item.weight>i:
+                    table[1][i] = table[0][i]
+                    action[1][i] = action[0][i]
+                else:
+                    if table[0][i-item.weight] + item.value > table[0][i]:
+                        table[1][i] = table[0][i-item.weight] + item.value
+                        action[1][i] = action[0][i-item.weight] + 2**item.index
+                    else:
+                        table[1][i] = table[0][i]
+                        action[1][i] = action[0][i]
+        # reset the space
+        del table[0]
+        table.append([0]*(capacity+1))
+        del action[0]
+        action.append([0]*(capacity+1))
+    best_value = table[0][capacity]
+    best_config = list(bin(action[0][capacity]))[2:][::-1]
+    best_config += [0]*(item_count-len(best_config))
+    output_data = str(best_value) + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, best_config))
+    return output_data
+
+with open("/Users/filename.txt", 'r') as input_data_file:
+    input_data = input_data_file.read()
+print(solve_it(input_data))

@@ -1,0 +1,138 @@
+# find the minimum amount of color a grpah so that no adjacent node share the same color
+
+import copy
+import operator
+from collections import OrderedDict
+import random
+
+def solve_it(input_data):
+    
+    lines = input_data.split('\n')
+
+    first_line = lines[0].split()
+    node_count = int(first_line[0])
+    edge_count = int(first_line[1])
+
+    edges = []
+    for i in range(1, edge_count + 1):
+        line = lines[i]
+        parts = line.split()
+        edges.append((int(parts[0]), int(parts[1])))
+    
+    # initialize a solution using greedy algorithm, constraint programming, and exhaustive search
+    color = -1
+    max_len = 1
+    max_start = 0
+    co = {}
+    colored = {}
+    const = {}
+    graph = {}
+    for e in edges:
+        if not e[0] in graph:
+            graph[e[0]] = []
+            const[e[0]] = []
+            colored[e[0]] = -1
+        if not e[1] in graph:
+            graph[e[1]] = []
+            const[e[1]] = []
+            colored[e[1]] = -1
+        graph[e[0]].append(e[1])
+        graph[e[1]].append(e[0])
+        if len(graph[e[0]])>max_len:
+            max_len = len(graph[e[0]])
+            max_start = e[0]
+        if len(graph[e[1]])>max_len:
+            max_len = len(graph[e[1]])
+            max_start = e[1]
+    s = max_start
+    while True:
+        dm = {}
+        for n in graph[s]:
+            for col in const[n]:
+                if not col in dm:
+                    dm[col] = 0
+                dm[col] += 1
+        dm = OrderedDict(sorted(dm.items(), key = operator.itemgetter(1))[::-1])
+        for i in dm:
+            if not i in const[s]:
+                colored[s] = i
+                if not i in co:
+                    co[i] = []
+                co[i].append(s)
+                break
+        if colored[s] == -1:
+            for i in range(color+1):
+                if not i in const[s] and not i in dm:
+                    colored[s] = i
+                    if not i in co:
+                        co[i] = []
+                    co[i].append(s)
+                    break
+            if colored[s] == -1:
+                color += 1
+                colored[s] = color
+                if not color in co:
+                    co[color] = []
+                co[color].append(s)
+        for x in graph[s]:
+            if colored[x] == -1 and not colored[s] in const[x]:
+                const[x].append(colored[s])
+        next_s = -1
+        next_max = -1
+        for x in const:
+            if len(const[x]) > next_max and colored[x]==-1:
+                next_max = len(const[x])
+                next_s = x
+        if next_s == -1:
+            break
+        s = next_s
+    
+    # check a solution of decrement number color in graph using local search
+    # return if find a infeasible solution of k color
+    feasible = True
+    while feasible:
+        prev_colored = colored.copy()
+        for n in co[color]:
+            index = random.randint(0,color)
+            co[index].append(n)
+            colored[n] = index
+        del co[color]
+        color -= 1
+        # make violation table
+        while True:
+            max_violation = [0,-1]
+            for n in range(node_count):
+                violation = 0
+                for next_n in graph[n]:
+                    if colored[n] == colored[next_n]:
+                        violation += 1
+                if violation > max_violation[0]:
+                    max_violation = [violation, n]
+            if max_violation[0] == 0:
+                break
+            nv = max_violation[1]
+            min_violation = [node_count+1,-1]
+            for c in range(color+1):
+                cv = 0
+                for n in graph[nv]: 
+                    if colored[n] == c:
+                        cv += 1
+                if cv < min_violation[0]:
+                    min_violation = [cv, c]
+            if min_violation[1] == colored[nv]:
+                feasible = False
+                colored = prev_colored.copy()
+                break
+            colored[nv] = min_violation[1]
+    solution = [0]*node_count
+    for x in colored:
+        solution[x] = colored[x]
+        
+    # prepare the solution in the specified output format
+    output_data = str(node_count) + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, solution))
+
+    return output_data
+with open("/Users/file.txt", 'r') as input_data_file:
+    input_data = input_data_file.read()
+print(solve_it(input_data))

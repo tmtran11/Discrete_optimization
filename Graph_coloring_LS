@@ -4,7 +4,7 @@ import copy
 import operator
 from collections import OrderedDict
 import random
-
+# using greedy algorithm, constraint programming, and local search
 def solve_it(input_data):
     
     lines = input_data.split('\n')
@@ -19,7 +19,7 @@ def solve_it(input_data):
         parts = line.split()
         edges.append((int(parts[0]), int(parts[1])))
     
-    # initialize a solution using greedy algorithm, constraint programming, and exhaustive search
+    # initialize a solution using greedy algorithm
     color = -1
     max_len = 1
     max_start = 0
@@ -27,6 +27,7 @@ def solve_it(input_data):
     colored = {}
     const = {}
     graph = {}
+    # initial graphs
     for e in edges:
         if not e[0] in graph:
             graph[e[0]] = []
@@ -44,7 +45,10 @@ def solve_it(input_data):
         if len(graph[e[1]])>max_len:
             max_len = len(graph[e[1]])
             max_start = e[1]
+    # find a start linked to most number of neighbor
     s = max_start
+    
+    # greedy algorithm
     while True:
         dm = {}
         for n in graph[s]:
@@ -53,6 +57,8 @@ def solve_it(input_data):
                     dm[col] = 0
                 dm[col] += 1
         dm = OrderedDict(sorted(dm.items(), key = operator.itemgetter(1))[::-1])
+        # find the color for the node inorder to maximize the range of color for its neighbor can still have
+        # a greedy, local algorithm, attemp to mimize number of colors needed
         for i in dm:
             if not i in const[s]:
                 colored[s] = i
@@ -89,6 +95,7 @@ def solve_it(input_data):
     
     # check a solution of decrement number color in graph using local search
     # return if find a infeasible solution of k color
+    
     feasible = True
     while feasible:
         prev_colored = colored.copy()
@@ -98,7 +105,10 @@ def solve_it(input_data):
             colored[n] = index
         del co[color]
         color -= 1
+        
         # make violation table
+        # locally minimum the violation, expect convergence with feasible k color
+        
         while True:
             max_violation = [0,-1]
             for n in range(node_count):
@@ -119,11 +129,13 @@ def solve_it(input_data):
                         cv += 1
                 if cv < min_violation[0]:
                     min_violation = [cv, c]
+            # infeasible if there are violation, but the violation cannot decrease
             if min_violation[1] == colored[nv]:
                 feasible = False
                 colored = prev_colored.copy()
                 break
             colored[nv] = min_violation[1]
+            
     solution = [0]*node_count
     for x in colored:
         solution[x] = colored[x]

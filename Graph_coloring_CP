@@ -1,0 +1,133 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar  8 19:59:53 2018
+
+@author: FPTShop
+"""
+# Using greedy algorithm, constraint programming to prune the search pace, exhaustive search
+
+import copy
+import operator
+from collections import OrderedDict
+import random
+def solve_it(input_data):
+    lines = input_data.split('\n')
+
+    first_line = lines[0].split()
+    node_count = int(first_line[0])
+    edge_count = int(first_line[1])
+
+    edges = []
+    for i in range(1, edge_count + 1):
+        line = lines[i]
+        parts = line.split()
+        edges.append((int(parts[0]), int(parts[1])))
+    
+    # initialize a solution with a greedy algorithm
+    color = -1
+    max_len = 1
+    max_start = 0
+    colored = [-1]*node_count
+    const = {}
+    graph = {}
+    for e in edges:
+        if not e[0] in graph:
+            graph[e[0]] = []
+            const[e[0]] = []
+        if not e[1] in graph:
+            graph[e[1]] = []
+            const[e[1]] = []
+        graph[e[0]].append(e[1])
+        graph[e[1]].append(e[0])
+        if len(graph[e[0]])>max_len:
+            max_len = len(graph[e[0]])
+            max_start = e[0]
+        if len(graph[e[1]])>max_len:
+            max_len = len(graph[e[1]])
+            max_start = e[1]
+    order = []
+    s = max_start
+    while True:
+        order.append(s)
+        dm = {}
+        for n in graph[s]:
+            for col in const[n]:
+                if not col in dm:
+                    dm[col] = 0
+                dm[col] += 1
+        dm = OrderedDict(sorted(dm.items(), key = operator.itemgetter(1))[::-1])
+        for i in dm:
+            if not i in const[s]:
+                colored[s] = i
+                break
+        if colored[s] == -1:
+            for i in range(color+1):
+                if not i in const[s] and not i in dm:
+                    colored[s] = i
+                    break
+            if colored[s] == -1:
+                color += 1
+                colored[s] = color
+        for x in graph[s]:
+            if colored[x] == -1 and not colored[s] in const[x]:
+                const[x].append(colored[s])
+        next_s = -1
+        next_max = -1
+        for x in const:
+            if len(const[x]) > next_max and colored[x]==-1:
+                next_max = len(const[x])
+                next_s = x
+        if next_s == -1:
+            break
+        s = next_s
+    
+    # slowly decrease the number of color to find minimum color needed for this graph
+    feasible = True
+    feasible_colored = []
+    
+    while feasible:
+        feasible_colored = colored.copy()
+        memory = [[-1]*node_count]
+        color -= 1
+        # Using depth first search to find feasible solution
+        while True:
+            if len(memory)==0:
+                feasible = False
+                break
+            colored = memory[-1].copy()
+            del memory[-1]
+            max_constraint = -1
+            next_search = -1
+            
+            # branch the search on node with most constraint to prune the search pace
+            for n in range(node_count):
+                if colored[n]==-1:
+                    constraint = 0
+                    for neigh in graph[n]:
+                        if colored[neigh] != -1:
+                            constraint += 1
+                    if constraint>max_constraint:
+                        max_constraint = constraint
+                        next_search = n
+            if next_search == -1:
+                break
+            next_pos = list(range(color+1))
+            for neigh in graph[next_search]:
+                if colored[neigh] in next_pos and colored[neigh] != -1:
+                    del next_pos[next_pos.index(colored[neigh])]
+            if len(next_pos)==0:
+                continue
+            for c in next_pos:
+                temp = colored.copy()
+                temp[next_search] = c
+                memory.append(temp)
+                
+    print(color+1)
+    output_data = str(node_count) + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, feasible_colored))
+    return output_data
+
+"""
+with open("/Users/file.txt", 'r') as input_data_file:
+    input_data = input_data_file.read()
+print(solve_it(input_data)) 

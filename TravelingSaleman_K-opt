@@ -1,0 +1,80 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import copy
+import math
+from collections import namedtuple
+
+Point = namedtuple("Point", ['x', 'y', 'i'])
+
+def length(point1, point2):
+    return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2)
+
+def solve_it(input_data):
+    # parse the input
+    lines = input_data.split('\n')
+
+    node_count = int(lines[0])
+
+    points = []
+    for a in range(1, node_count+1):
+        line = lines[a]
+        parts = line.split()
+        points.append(Point(float(parts[0]), float(parts[1]), a-1))
+        
+    max_edge = [points[-1],points[0]]
+    min_len = 1000000000000
+    min_path = []
+    switch = points.copy()
+    max_edge = [points[-1], points[0]]
+    i = -1
+    searched = []
+    
+    while not i == node_count-1:
+        found = False
+        for index in range(node_count):
+            if switch[index-1]!=max_edge[0] and not switch[index].i in searched and length(max_edge[1],switch[index])<length(max_edge[0],max_edge[1]):
+                searched.append(max_edge[1].i)
+                found = True
+                #print(switch[index-1],switch[index]," index")
+                #print(max_edge," max_edge")
+                temp1 = copy.copy(max_edge[1])
+                temp2 = copy.copy(switch[index])
+                switch[switch.index(max_edge[1])] = temp2
+                switch[index] = temp1
+                obj = length(switch[-1], switch[0])
+                for a in range(0, node_count-1):
+                    obj += length(switch[a], switch[a+1])
+                print(min_len)
+                if obj<min_len:
+                    min_len = obj
+                    min_path = copy.copy(switch)
+                next_index = switch.index(max_edge[0])+1
+                if next_index == node_count:
+                    next_index = 0
+                max_edge = [copy.copy(max_edge[0]),copy.copy(switch[next_index])]
+                break
+        if not found:
+            switch = min_path.copy()
+            i += 1
+            next_i = switch.index(points[i])+1
+            if next_i>node_count-1:
+                next_i -= node_count
+            max_edge = [points[i],switch[next_i]]
+            searched = []
+
+    solution = min_path
+    obj = length(solution[-1], solution[0])
+    for index in range(0, node_count-1):
+        obj += length(solution[index], solution[index+1])
+    solution = []
+    for x in min_path:
+        solution.append(x.i)
+    # prepare the solution in the specified output f
+    output_data = '%.2f' % obj + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, solution))
+
+    return output_data
+
+with open("/Users/file.txt", 'r') as input_data_file:
+    input_data = input_data_file.read()
+print(solve_it(input_data))

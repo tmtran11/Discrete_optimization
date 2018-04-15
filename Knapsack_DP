@@ -38,11 +38,6 @@ def solve_it(input_data):
     action = table.copy()
     for item in items:
         for i in range(capacity+1):
-            """
-            for x in table:
-                print(x)
-            print('/n')
-            """
             # initialize table and action
             if item.index == 0:
                 if item.weight<i:

@@ -10,6 +10,7 @@ import copy
 import operator
 from collections import OrderedDict
 import random
+
 def solve_it(input_data):
     lines = input_data.split('\n')
 
@@ -127,7 +128,6 @@ def solve_it(input_data):
     output_data += ' '.join(map(str, feasible_colored))
     return output_data
 
-"""
 with open("/Users/file.txt", 'r') as input_data_file:
     input_data = input_data_file.read()
 print(solve_it(input_data)) 
